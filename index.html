@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Cuarto Paradigma — Jim Gray & la eCiencia</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --bg:      #0f0e0c;
+  --bg2:     #171613;
+  --bg3:     #1e1d1a;
+  --bg4:     #252420;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --rust:    #c9522a;
+  --rust-l:  #e06840;
+  --gold:    #c9963a;
+  --text:    #f0ece4;
+  --muted:   #7a756a;
+  --dim:     #3a3830;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+/* ── PROGRESS ── */
+#progress {
+  position: fixed; top: 0; left: 0;
+  height: 2px; width: 0%;
+  background: var(--rust);
+  z-index: 1000;
+  transition: width 0.1s linear;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 500;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 4rem;
+  background: rgba(15,14,12,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+nav ul { display: flex; gap: 2.5rem; list-style: none; }
+nav a {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none;
+  transition: color 0.2s;
+}
+nav a:hover { color: var(--text); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 6rem 7rem;
+  position: relative; overflow: hidden;
+}
+
+.hero-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-grid-lines {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+.hero-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--rust);
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.8rem; position: relative;
+}
+.hero-eyebrow::before {
+  content: ''; width: 36px; height: 1px; background: var(--rust);
+}
+
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(3.6rem, 7vw, 7rem);
+  font-weight: 800; line-height: 0.95;
+  letter-spacing: -0.025em;
+  position: relative; max-width: 900px;
+}
+.hero h1 em {
+  font-family: 'Lora', serif;
+  font-style: italic; color: var(--rust-l);
+}
+
+.hero-desc {
+  margin-top: 2.5rem; max-width: 420px;
+  font-size: 1rem; color: var(--muted);
+  font-weight: 400; position: relative;
+  line-height: 1.7;
+}
+
+.hero-rule {
+  margin-top: 2.5rem;
+  width: 200px; height: 1px;
+  background: linear-gradient(90deg, var(--rust), transparent);
+}
+
+.hero-meta {
+  position: absolute; right: 6rem; bottom: 7rem;
+  text-align: right;
+}
+.hero-meta span {
+  display: block;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase;
+}
+.hero-meta strong {
+  display: block;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem; font-weight: 800; color: var(--text);
+  margin-top: 0.2rem;
+}
+
+.scroll-cue {
+  position: absolute; bottom: 2.5rem; left: 6rem;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem;
+}
+.scroll-cue span {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.55rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--dim);
+}
+.scroll-line {
+  width: 1px; height: 44px; background: var(--rust);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scaleY(1)} 50%{opacity:0.2;transform:scaleY(0.5)} }
+
+/* ── SECTION DIVIDERS ── */
+.sec-banner {
+  background: var(--rust);
+  padding: 4rem 6rem;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  position: relative; overflow: hidden;
+}
+.sec-banner .big-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 14rem; font-weight: 800;
+  color: rgba(255,255,255,0.08);
+  line-height: 1; position: absolute;
+  right: 3rem; bottom: -2rem;
+  pointer-events: none;
+}
+.sec-banner h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: 800; color: white;
+  line-height: 1.05; position: relative;
+}
+.sec-banner .sec-sub {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  position: relative; margin-bottom: 0.6rem;
+}
+
+/* ── MAIN SECTION WRAPPER ── */
+.section {
+  padding: 6rem 6rem;
+  max-width: 1200px; margin: 0 auto;
+  opacity: 0; transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.section.visible { opacity: 1; transform: translateY(0); }
+
+/* ── EYEBROW LABEL ── */
+.eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--rust);
+  display: flex; align-items: center; gap: 0.8rem;
+  margin-bottom: 1.6rem;
+}
+.eyebrow::before {
+  content: ''; width: 24px; height: 1px; background: var(--rust);
+}
+
+/* ── HEADINGS ── */
+h2.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 800; line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin-bottom: 1.8rem;
+}
+h2.sec-title em {
+  font-family: 'Lora', serif;
+  font-style: italic; color: var(--rust-l);
+}
+
+h3.sub-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-top: 2.5rem; margin-bottom: 0.6rem;
+}
+
+p { margin-bottom: 1.1rem; color: rgba(240,236,228,0.75); }
+p strong { color: var(--text); font-weight: 500; }
+
+/* ── PULL QUOTE ── */
+blockquote {
+  padding: 2rem 2.5rem 2rem 3rem;
+  margin: 2.5rem 0;
+  background: var(--bg2);
+  border-left: 3px solid var(--rust);
+  position: relative;
+}
+blockquote::before {
+  content: '\201C';
+  position: absolute; left: 0.7rem; top: 0.2rem;
+  font-family: 'Lora', serif;
+  font-size: 4rem; color: var(--rust);
+  line-height: 1; opacity: 0.5;
+}
+blockquote p {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem; font-style: italic;
+  color: var(--text); margin: 0;
+  line-height: 1.65;
+}
+blockquote cite {
+  display: block; margin-top: 0.8rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); font-style: normal;
+}
+
+/* ── PROFILE BLOCK ── */
+.profile-wrap {
+  display: grid; grid-template-columns: 220px 1fr;
+  gap: 4rem; align-items: start;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 3rem;
+  position: relative; margin-top: 2rem;
+}
+.profile-wrap::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; width: 3px; height: 100%;
+  background: var(--rust);
+}
+
+.profile-id { text-align: center; }
+
+.avatar {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--bg3), var(--dim));
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.2rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem; font-weight: 800; color: var(--muted);
+}
+
+.profile-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--text);
+}
+.profile-dates {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; letter-spacing: 0.08em;
+  color: var(--muted); margin-top: 0.4rem; line-height: 1.8;
+}
+
+.badge {
+  display: inline-block; margin-top: 1rem;
+  padding: 0.3rem 0.9rem;
+  border: 1px solid var(--rust); color: var(--rust-l);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+.stat-row {
+  display: flex; gap: 0; margin-top: 2rem;
+  border: 1px solid var(--border);
+}
+.stat {
+  flex: 1; padding: 1rem 1.2rem;
+  border-right: 1px solid var(--border); text-align: center;
+}
+.stat:last-child { border-right: none; }
+.stat-n {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem; font-weight: 800;
+  color: var(--rust-l); line-height: 1; display: block;
+}
+.stat-l {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin-top: 0.3rem; display: block;
+}
+
+/* ── CARDS GRID ── */
+.cards-2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--dim);
+  margin: 2rem 0;
+}
+.cards-3 {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--dim);
+  margin: 2rem 0;
+}
+.card {
+  background: var(--bg2); padding: 1.8rem 2rem;
+  transition: background 0.2s;
+}
+.card:hover { background: var(--bg3); }
+.card-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.8rem; font-weight: 800;
+  color: var(--dim); line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--gold); letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+.card p { font-size: 0.88rem; margin: 0; }
+
+/* ── FEATURE LIST ── */
+.feat-list { list-style: none; margin: 1.2rem 0 1.5rem; }
+.feat-list li {
+  padding: 0.5rem 0 0.5rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  color: rgba(240,236,228,0.7);
+  position: relative;
+}
+.feat-list li:first-child { border-top: 1px solid var(--border); }
+.feat-list li::before {
+  content: '→'; position: absolute; left: 0;
+  color: var(--rust); font-size: 0.7rem;
+  font-family: 'Syne', sans-serif;
+}
+
+/* ── PARADIGM TIMELINE ── */
+.paradigm {
+  display: flex; margin: 2.5rem 0; gap: 0;
+  border: 1px solid var(--border);
+}
+.p-step {
+  flex: 1; padding: 1.5rem 1.2rem;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.p-step:last-child { border-right: none; }
+.p-step::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: var(--dim);
+  transition: background 0.3s;
+}
+.p-step.highlighted::before { background: var(--rust); }
+.p-n {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 0.5rem;
+}
+.p-step h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.3rem;
+}
+.p-step.highlighted h4 { color: var(--gold); }
+.p-step p { font-size: 0.78rem; color: var(--muted); margin: 0; }
+
+/* ── PROV GRID ── */
+.prov-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--dim);
+  margin: 1.5rem 0; max-width: 700px;
+}
+.prov-item {
+  background: var(--bg2); padding: 1.2rem 1.4rem;
+}
+.prov-q {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem; font-weight: 600;
+  letter-spacing: 0.06em; color: var(--muted);
+}
+
+/* ── TAG CLUSTER ── */
+.tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.2rem 0; }
+.tag {
+  padding: 0.25rem 0.75rem;
+  background: var(--bg3); border: 1px solid var(--border);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.tag.hi {
+  background: rgba(201,82,42,0.12);
+  border-color: rgba(201,82,42,0.35);
+  color: var(--rust-l);
+}
+
+/* ── ENTREZ BOX ── */
+.entrez-box {
+  display: flex; margin: 1.8rem 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  overflow: hidden;
+}
+.entrez-label {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  background: var(--rust);
+  color: white; padding: 1.5rem 0.8rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.55rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+}
+.entrez-tags {
+  padding: 1.5rem 2rem;
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+}
+
+/* ── SOLUTION GRID ── */
+.sol-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--dim); margin: 2rem 0;
+}
+.sol-card { background: var(--bg2); padding: 2.2rem 2.4rem; }
+.sol-tag {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.55rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--rust); display: block; margin-bottom: 0.7rem;
+}
+.sol-card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight: 700; color: var(--text);
+  margin-bottom: 0.7rem;
+}
+.sol-card p { font-size: 0.88rem; margin: 0; }
+
+/* ── PROCESS STEPS ── */
+.steps {
+  counter-reset: step;
+  display: flex; flex-direction: column; gap: 0;
+  margin: 1.5rem 0; max-width: 600px;
+  border: 1px solid var(--border);
+}
+.step {
+  display: flex; align-items: flex-start; gap: 1.5rem;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  counter-increment: step;
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem; font-weight: 800;
+  color: var(--rust); line-height: 1;
+  min-width: 2rem;
+}
+.step-body h5 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--gold); margin-bottom: 0.2rem;
+}
+.step-body p { font-size: 0.85rem; margin: 0; }
+
+/* ── FULL-WIDTH DIVIDER ── */
+.fw-line {
+  width: 100%; height: 1px;
+  background: var(--border);
+}
+
+/* ── CLOSING ── */
+.closing-wrap {
+  background: var(--bg2);
+  padding: 10rem 6rem;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.closing-wrap::before {
+  content: '?';
+  position: absolute; font-family: 'Syne', sans-serif;
+  font-size: 50vw; font-weight: 800;
+  color: rgba(255,255,255,0.012);
+  left: 50%; top: 50%; transform: translate(-50%,-50%);
+  pointer-events: none; line-height: 1;
+}
+.closing-q {
+  font-family: 'Lora', Georgia, serif;
+  font-size: clamp(1.5rem, 2.8vw, 2.6rem);
+  font-style: italic; line-height: 1.5;
+  color: var(--text); max-width: 820px;
+  margin: 0 auto; position: relative;
+}
+.closing-q em { color: var(--gold); font-style: normal; }
+.closing-q::before {
+  content: ''; display: block;
+  width: 40px; height: 2px;
+  background: var(--rust);
+  margin: 0 auto 2.5rem;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav ul { display: none; }
+  .hero, .section, .sec-banner, .closing-wrap { padding-left: 2rem; padding-right: 2rem; }
+  .scroll-cue { left: 2rem; }
+  .hero-meta { right: 2rem; }
+  .profile-wrap { grid-template-columns: 1fr; gap: 2rem; }
+  .cards-2, .sol-grid { grid-template-columns: 1fr; }
+  .cards-3 { grid-template-columns: 1fr 1fr; }
+  .paradigm { flex-direction: column; }
+  .prov-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<nav>
+  <span class="nav-logo">El Cuarto Paradigma</span>
+  <ul>
+    <li><a href="#gray">Jim Gray</a></li>
+    <li><a href="#problema">El Problema</a></li>
+    <li><a href="#comunicacion">Comunicación</a></li>
+    <li><a href="#paradigma">Paradigma</a></li>
+    <li><a href="#presente">El Presente</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<section class="hero">
+  <div class="hero-grid-lines"></div>
+  <div class="hero-ring" style="width:55vw;height:55vw;right:-12vw;top:-12vw;border:1px solid rgba(201,82,42,0.06);border-radius:50%;"></div>
+  <div class="hero-ring" style="width:35vw;height:35vw;right:-2vw;top:-2vw;border:1px solid rgba(201,82,42,0.04);border-radius:50%;"></div>
+
+  <div class="hero-eyebrow">Exposición académica</div>
+  <h1>El Dilema<br>de la <em>eCiencia</em><br>y el Cuarto<br>Paradigma</h1>
+  <div class="hero-rule"></div>
+  <p class="hero-desc">Basado en los escritos y visión de Jim Gray — el llamado a construir una ciencia donde datos, literatura y herramientas operen como un solo sistema.</p>
+
+  <div class="hero-meta">
+    <span>Concepto acuñado por</span>
+    <strong>Jim Gray</strong>
+    <span>The Fourth Paradigm · 2007</span>
+  </div>
+
+  <div class="scroll-cue">
+    <span>Desplazar</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ══════════ SECCIÓN I: JIM GRAY ══════════ -->
+<div id="gray" class="sec-banner">
+  <div>
+    <div class="sec-sub">Sección I — Contexto</div>
+    <h2>¿Quién es Jim Gray?</h2>
+  </div>
+  <div class="big-num">I</div>
+</div>
+
+<div class="section">
+  <div class="eyebrow">El arquitecto de una nueva forma de hacer ciencia</div>
+  <h2 class="sec-title">James Nicholas Gray,<br><em>1944 – 2007</em></h2>
+
+  <div class="profile-wrap">
+    <div class="profile-id">
+      <div class="avatar">JG</div>
+      <div class="profile-name">James Nicholas Gray</div>
+      <div class="profile-dates">
+        12 Ene 1944<br>San Francisco, CA<br>
+        Desaparecido en el mar<br>28 Ene 2007
+      </div>
+      <div class="badge">Turing Award · 1998</div>
+    </div>
+
+    <div>
+      <p>James Nicholas Gray fue un científico computacional estadounidense cuya carrera transformó el modo en que el mundo gestiona, almacena y procesa información. Nacido en San Francisco, cursó su licenciatura en matemáticas en la Universidad de California, Berkeley (1966) y obtuvo el <strong>primer doctorado en ciencias de la computación</strong> que otorgó esa institución (1969). Antes de completarlo, realizó una estancia en los Bell Laboratories.</p>
+      <p>Su trayectoria profesional abarcó IBM (1971–1980), Tandem Computers (1980–1990), Digital Equipment Corporation (1990–1994) y finalmente <strong>Microsoft Research (1995–2007)</strong>, donde dirigió el Centro de Investigación de la Bahía de San Francisco.</p>
+      <p>En 1998 la ACM le otorgó el <strong>Premio Turing</strong> —el galardón más alto de las ciencias de la computación— por sus contribuciones seminales a bases de datos, procesamiento de transacciones y las <strong>propiedades ACID</strong> que hoy sostienen cada operación bancaria y cada transacción en línea en el mundo.</p>
+      <p>A partir de 2002 reorientó su trabajo hacia la <strong>eCiencia</strong>: la aplicación de las tecnologías de información para resolver problemas científicos intensivos en datos. Su gran obra póstuma, <em>The Fourth Paradigm</em>, fue publicada en 2009 por Microsoft Research como un tributo colectivo a su visión.</p>
+
+      <div class="stat-row">
+        <div class="stat"><span class="stat-n">1998</span><span class="stat-l">Premio Turing</span></div>
+        <div class="stat"><span class="stat-n">2002</span><span class="stat-l">Inicia eCiencia</span></div>
+        <div class="stat"><span class="stat-n">2009</span><span class="stat-l">The Fourth Paradigm</span></div>
+        <div class="stat"><span class="stat-n">4.°</span><span class="stat-l">Paradigma propuesto</span></div>
+      </div>
+    </div>
+  </div>
+
+  <blockquote>
+    <p>Quería señalar que casi todo acerca de la ciencia está cambiando debido al impacto de las tecnologías de la información.</p>
+    <cite>— Jim Gray, The Fourth Paradigm</cite>
+  </blockquote>
+</div>
+
+<div class="fw-line"></div>
+
+<!-- ══════════ SECCIÓN II: EL PROBLEMA ══════════ -->
+<div id="problema" class="sec-banner">
+  <div>
+    <div class="sec-sub">Sección II — El diagnóstico</div>
+    <h2>Muchos datos.<br>Pocas herramientas.</h2>
+  </div>
+  <div class="big-num">II</div>
+</div>
+
+<div class="section">
+  <div class="eyebrow">El punto de partida</div>
+  <h2 class="sec-title">La avalancha de datos<br>y las herramientas <em>"espantosas"</em></h2>
+
+  <p>Para entender la urgencia de la eCiencia, debemos mirar el problema central que plantea Jim Gray: la ciencia actual se enfrenta a una <strong>avalancha masiva de datos</strong>, pero las herramientas para capturarlos, curarlos y analizarlos son, en sus propias palabras, simplemente <strong>"espantosas"</strong>.</p>
+
+  <div class="cards-2">
+    <div class="card">
+      <div class="card-num">01</div>
+      <h4>El privilegio del software</h4>
+      <p>Los proyectos de gran escala cuentan con presupuestos millonarios para software a medida. El software se ha convertido en el <strong>costo de capital dominante</strong> de los experimentos científicos. Sin embargo, esto está reservado para unos pocos.</p>
+    </div>
+    <div class="card">
+      <div class="card-num">02</div>
+      <h4>La "caja de zapatos digital"</h4>
+      <p>El científico promedio termina atrapado en situaciones inmanejables: <strong>10,000 libros de Excel</strong>, cada uno con 50 hojas de trabajo. No hay manera eficiente de procesar ni analizar ese volumen con herramientas convencionales.</p>
+    </div>
+    <div class="card">
+      <div class="card-num">03</div>
+      <h4>Herramientas insuficientes</h4>
+      <p>Para el análisis estadístico y de datos, el investigador promedio solo dispone de <strong>Excel y MATLAB</strong>: herramientas clásicas pero completamente insuficientes para la escala de petabytes que exige la investigación intensiva en datos de hoy.</p>
+    </div>
+    <div class="card">
+      <div class="card-num">04</div>
+      <h4>La brecha real</h4>
+      <p>La brecha no es entre científicos que quieren hacer buena ciencia y los que no. Es entre quienes tienen <strong>acceso a infraestructura</strong> y quienes no.</p>
+    </div>
+  </div>
+</div>
+
+<div class="fw-line"></div>
+
+<!-- ══════════ SECCIÓN III: COMUNICACIÓN ══════════ -->
+<div id="comunicacion" class="sec-banner">
+  <div>
+    <div class="sec-sub">Sección III — La transformación</div>
+    <h2>Comunicación<br>científica</h2>
+  </div>
+  <div class="big-num">III</div>
+</div>
+
+<div class="section">
+  <div class="eyebrow">La ciencia cambia cómo se comunica</div>
+  <h2 class="sec-title">Más allá del artículo:<br><em>datos, contexto y conexiones</em></h2>
+
+  <p>Jim Gray plantea que la ciencia no solo cambia por producir más datos, sino también por la forma en que esos datos se <strong>comunican, conservan y comparten</strong>. Detrás de cada artículo científico hay enormes volúmenes de datos que normalmente no se publican ni se organizan de manera sistemática.</p>
+
+  <blockquote>
+    <p>La literatura publicada es solo la punta del iceberg de los datos.</p>
+    <cite>— Jim Gray</cite>
+  </blockquote>
+
+  <!-- La nueva biblioteca -->
+  <h3 class="sub-title">La nueva biblioteca digital</h3>
+  <p>Las bibliotecas científicas solían guardar únicamente libros, revistas y artículos. Según Gray, las bibliotecas digitales deben conectar mucho más:</p>
+
+  <ul class="feat-list">
+    <li>Artículos científicos</li>
+    <li>Datos originales del experimento</li>
+    <li>Métodos de análisis empleados</li>
+    <li>Resultados y visualizaciones</li>
+    <li>Contexto completo de la investigación</li>
+  </ul>
+
+  <p><strong>"La curación no es barata."</strong> Publicar en digital no significa solo poner archivos en línea, sino hacerlos accesibles, comprensibles y reutilizables. Un ejemplo concreto que Gray cita es <strong>PubMed Central</strong>, repositorio digital de literatura biomédica.</p>
+
+  <!-- Revistas superpuestas -->
+  <h3 class="sub-title">Revistas superpuestas</h3>
+  <p>Una innovación que Gray propone: revistas que funcionan como una capa de selección y revisión sobre artículos ya depositados en repositorios digitales. La revisión por pares se conserva, pero <em>"es diferente"</em>. El flujo:</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h5>Depósito</h5>
+        <p>El artículo se deposita en un archivo digital abierto, accesible desde el primer momento.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h5>Revisión comunitaria</h5>
+        <p>Una comunidad académica lo revisa. La revisión por pares se conserva, pero en un formato diferente al tradicional.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h5>Selección</h5>
+        <p>La revista selecciona los trabajos más relevantes de entre los depositados.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h5>Enlace con los datos</h5>
+        <p>Los artículos seleccionados se enlazan directamente con sus datos originales, cerrando el ciclo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Publicar datos -->
+  <h3 class="sub-title">Publicar datos, no solo artículos</h3>
+  <p>Una investigación no debería publicar solo sus conclusiones, sino también los datos que las respaldan.</p>
+
+  <blockquote>
+    <p>Si la respuesta es 42, ¿cuáles son las unidades?</p>
+    <cite>— Jim Gray · sobre publicar datos con contexto</cite>
+  </blockquote>
+
+  <p>Publicar datos implica incluir todos los siguientes elementos:</p>
+  <ul class="feat-list">
+    <li>Unidades de medición</li>
+    <li>Origen de los datos</li>
+    <li>Instrumentos utilizados</li>
+    <li>Método de análisis aplicado</li>
+    <li>Contexto del experimento</li>
+    <li>Procedencia completa de los datos</li>
+  </ul>
+
+  <!-- Procedencia -->
+  <h3 class="sub-title">Procedencia de los datos (Data Provenance)</h3>
+  <p>La <em>data provenance</em> es la historia completa de los datos. Permite verificar y reproducir una investigación respondiendo preguntas fundamentales:</p>
+
+  <div class="prov-grid">
+    <div class="prov-item"><div class="prov-q">¿Quién produjo los datos?</div></div>
+    <div class="prov-item"><div class="prov-q">¿Con qué instrumentos?</div></div>
+    <div class="prov-item"><div class="prov-q">¿Cuándo se midieron?</div></div>
+    <div class="prov-item"><div class="prov-q">¿Cómo se obtuvieron?</div></div>
+    <div class="prov-item"><div class="prov-q">¿Cómo se procesaron?</div></div>
+    <div class="prov-item"><div class="prov-q">¿Cómo se llegó al resultado?</div></div>
+  </div>
+
+  <!-- Datos, info, conocimiento -->
+  <h3 class="sub-title">Datos, información y conocimiento</h3>
+  <p>Los datos por sí solos no son conocimiento. Para que tengan sentido necesitan estructura, contexto y significado. Gray señala que incluso palabras aparentemente simples requieren definición compartida: ¿qué significa exactamente <em>"gen"</em>, <em>"galaxia"</em>, <em>"estrella"</em> o <em>"medición"</em>? Para eso son necesarios:</p>
+
+  <ul class="feat-list">
+    <li>Esquemas de organización</li>
+    <li>Vocabularios comunes entre disciplinas</li>
+    <li>Ontologías formales compartidas</li>
+  </ul>
+
+  <!-- Entrez -->
+  <h3 class="sub-title">El ejemplo de Entrez</h3>
+  <p>Entrez es el motor de búsqueda de ciencias de la vida creado por el National Center for Biotechnology Information (NCBI). Es el modelo concreto que Gray cita como ejemplo de lo que debería ser la nueva biblioteca digital: un sistema que conecta en un solo lugar literatura científica, bases de datos biológicas y datos de investigación.</p>
+
+  <div class="entrez-box">
+    <div class="entrez-label">Entrez · NCBI</div>
+    <div class="entrez-tags">
+      <span class="tag hi">Literatura científica</span>
+      <span class="tag hi">PubMed Central</span>
+      <span class="tag hi">GenBank</span>
+      <span class="tag">Secuencias de proteínas</span>
+      <span class="tag">Datos genéticos</span>
+      <span class="tag">Enfermedades</span>
+    </div>
+  </div>
+
+  <p>Los datos y la literatura pueden —y deben— funcionar juntos.</p>
+
+  <!-- Bibliotecas de datos -->
+  <h3 class="sub-title">Bibliotecas digitales de datos</h3>
+  <p>Gray propone crear bibliotecas digitales no solo para documentos, sino también para datos científicos crudos. La razón es urgente:</p>
+
+  <ul class="feat-list">
+    <li>Los proyectos terminan y los datos se pierden</li>
+    <li>Los investigadores cambian de institución o se retiran</li>
+    <li>Los datos pequeños también importan y son reutilizables por otros</li>
+    <li>La comunidad científica puede sacar nuevas conclusiones de datos antiguos</li>
+  </ul>
+
+  <blockquote>
+    <p>Necesitamos archivos para los datos.</p>
+    <cite>— Jim Gray</cite>
+  </blockquote>
+</div>
+
+<div class="fw-line"></div>
+
+<!-- ══════════ SECCIÓN IV: EL PARADIGMA ══════════ -->
+<div id="paradigma" class="sec-banner">
+  <div>
+    <div class="sec-sub">Sección IV — El concepto central</div>
+    <h2>El Cuarto Paradigma</h2>
+  </div>
+  <div class="big-num">IV</div>
+</div>
+
+<div class="section">
+  <div class="eyebrow">Una nueva era del método científico</div>
+  <h2 class="sec-title">Ciencia <em>intensiva en datos</em></h2>
+
+  <p>La propuesta más radical de Jim Gray es que la ciencia está atravesando una transformación de la misma magnitud que las anteriores grandes revoluciones del método científico. Él la denomina el <strong>Cuarto Paradigma</strong>.</p>
+
+  <div class="paradigm">
+    <div class="p-step">
+      <div class="p-n">Primer paradigma</div>
+      <h4>Experimental</h4>
+      <p>Observación directa de fenómenos naturales. Empirismo puro.</p>
+    </div>
+    <div class="p-step">
+      <div class="p-n">Segundo paradigma</div>
+      <h4>Teórico</h4>
+      <p>Modelos matemáticos y leyes. Newton, Maxwell.</p>
+    </div>
+    <div class="p-step">
+      <div class="p-n">Tercer paradigma</div>
+      <h4>Computacional</h4>
+      <p>Simulación numérica con computadoras digitales.</p>
+    </div>
+    <div class="p-step highlighted">
+      <div class="p-n">Cuarto paradigma</div>
+      <h4>Intensivo en datos</h4>
+      <p>El conocimiento surge del análisis de grandes volúmenes de datos.</p>
+    </div>
+  </div>
+
+  <blockquote>
+    <p>El objetivo es tener un mundo en el que toda la literatura científica esté en línea, todos los datos científicos estén en línea y ambos puedan interoperar entre sí. Se necesitan muchas herramientas nuevas para que esto suceda.</p>
+    <cite>— Jim Gray, The Fourth Paradigm</cite>
+  </blockquote>
+
+  <p>La ciencia experimental, teórica y computacional están siendo todas afectadas por la avalancha de datos. La computación no es solo una herramienta auxiliar: con el cuarto paradigma, <strong>es el método mismo</strong>.</p>
+</div>
+
+<div class="fw-line"></div>
+
+<!-- ══════════ SECCIÓN V: EL PRESENTE ══════════ -->
+<div id="presente" class="sec-banner">
+  <div>
+    <div class="sec-sub">Sección V — El despertar</div>
+    <h2>La respuesta<br>del siglo XXI</h2>
+  </div>
+  <div class="big-num">V</div>
+</div>
+
+<div class="section">
+  <div class="eyebrow">Del diagnóstico de Gray a la práctica actual</div>
+  <h2 class="sec-title">Cómo resolvimos<br><em>los problemas que Gray planteaba</em></h2>
+
+  <p>La charla de Jim Gray fue una advertencia y una visión profética en 2007. Hoy, el auge de la Ciencia de Datos, la ingeniería de datos y el Machine Learning ha transformado esos inmensos cuellos de botella en la base de la innovación tecnológica.</p>
+
+  <div class="sol-grid">
+    <div class="sol-card">
+      <span class="sol-tag">De la "caja de zapatos" a la nube</span>
+      <h4>Infraestructura distribuida</h4>
+      <p>El problema de mover petabytes por FTP y el colapso de las hojas de Excel se solucionó cambiando la arquitectura. Hoy operamos sobre <strong>Data Lakes y almacenes en la nube</strong>. Siguiendo la visión de Gray, ya no llevamos los datos a la computadora del científico; llevamos el poder de cómputo directamente a los datos, aplicando SQL distribuido para procesar terabytes en segundos.</p>
+    </div>
+    <div class="sol-card">
+      <span class="sol-tag">La respuesta al monopolio del software</span>
+      <h4>Democratización open-source</h4>
+      <p>Gray lamentaba la falta de herramientas genéricas y el monopolio de software costoso. Hoy el <strong>ecosistema open-source</strong> ha triunfado. Los "cuadernos web" que él imaginaba son hoy una realidad gracias a entornos colaborativos. Lenguajes y librerías abiertas permiten que cualquier investigador capture, cure, limpie y visualice datos sin crear software desde cero.</p>
+    </div>
+    <div class="sol-card">
+      <span class="sol-tag">Más allá de O(N³)</span>
+      <h4>Algoritmos escalables</h4>
+      <p>Gray advertía que los algoritmos de agrupamiento tradicionales colapsaban con grandes datos por su complejidad matemática. Hoy utilizamos <strong>algoritmos avanzados basados en árboles y gradientes</strong> —como LightGBM— y aplicamos validaciones estadísticas robustas que encuentran patrones complejos en millones de registros de manera extremadamente eficiente.</p>
+    </div>
+    <div class="sol-card">
+      <span class="sol-tag">La evolución de los LIMS</span>
+      <h4>Pipelines automatizados</h4>
+      <p>Los Sistemas de Gestión de Información de Laboratorio (LIMS) que Gray pedía evolucionaron hacia los <strong>Data Pipelines y MLOps</strong>. Hoy es estándar conectar la ingesta de datos en tiempo real, estructurarla de forma autodescriptiva y desplegar dashboards interactivos, automatizando el ciclo de vida del dato de principio a fin.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">Conclusión general</h3>
+  <p>Jim Gray nos advirtió que la ciencia se estancaría si no lográbamos dominar el diluvio de información. El auge actual de la ciencia de datos no es solo una moda tecnológica: es la <strong>respuesta evolutiva directa</strong> a esa crisis de curación y almacenamiento.</p>
+  <p>Al combinar infraestructuras distribuidas escalables con herramientas de inteligencia de datos eficientes, hemos logrado hacer realidad la visión de la eCiencia. La información científica conectada, curada y accesible ya no es una utopía: <strong>el Cuarto Paradigma es ahora el método científico estándar</strong> sobre el cual estamos construyendo el futuro del conocimiento.</p>
+</div>
+
+<!-- ══════════ CIERRE ══════════ -->
+<div class="closing-wrap">
+  <div class="eyebrow" style="justify-content:center;margin-bottom:2.5rem;">Pregunta para el público</div>
+  <p class="closing-q">
+    ¿De qué sirve que la ciencia produzca una enorme cantidad de datos si esos datos <em>no se curan</em>, <em>no se publican</em> y no pueden <em>conectarse con la literatura científica</em>?
+  </p>
+  <div style="margin-top:3.5rem;font-family:'Syne',sans-serif;font-size:0.55rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim);">
+    Jim Gray · The Fourth Paradigm · eCiencia
+  </div>
+</div>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (window.scrollY / h * 100) + '%';
+  });
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.section').forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
